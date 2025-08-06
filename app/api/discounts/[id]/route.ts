@@ -13,10 +13,10 @@ const shopify = axios.create({
 });
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const dbId = parseInt(params.id, 10);
+  const dbId = parseInt((await params).id);
   const discount = await prisma.discount.findUnique({ where: { id: dbId } });
   if (!discount) {
     return NextResponse.json({ error: "Discount not found" }, { status: 404 });
