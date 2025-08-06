@@ -15,12 +15,13 @@ datasource db {
 }
 
 model Discount {
-  id         Int      @id @default(autoincrement())
-  title      String   @db.VarChar(255)
-  heading    String   @db.Text
-  percentOff Int
-  buyProduct Int
-  getProduct Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  discountGid String   @db.VarChar(255)
+  title       String   @db.VarChar(255)
+  heading     String   @db.VarChar(255)
+  description String   @db.Text
+  percentOff  Int
+  buyProduct  String
+  getProduct  String
+  createdAt   DateTime @default(now())
 }
