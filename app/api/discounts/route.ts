@@ -1,6 +1,6 @@
 // app/api/discounts/route.ts
 import { bundleSchema } from "@/app/validationSchema";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
@@ -119,12 +119,20 @@ export async function POST(request: NextRequest) {
       },
       { headers: { "Content-Type": "application/json" } }
     );
-  } catch (mfErr: any) {
-    console.error("Metafield error:", mfErr.response?.data || mfErr.message);
-    return NextResponse.json(
-      { error: mfErr.response?.data || mfErr.message },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      // Shopify or network error
+      const message = error.response?.data || error.message;
+      console.error("Shopify error:", message);
+      return NextResponse.json(
+        { error: message },
+        { status: error.response?.status || 500 }
+      );
+    }
+    // Other errors (validation, Prisma, etc.)
+    const err = error instanceof Error ? error : new Error("Unknown error");
+    console.error("Server error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true, discountGid }, { status: 201 });

@@ -1,5 +1,5 @@
 // app/api/discounts/[id]/route.ts
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -11,6 +11,13 @@ const shopify = axios.create({
   baseURL: SHOP_BASE,
   headers: { "X-Shopify-Access-Token": TOKEN },
 });
+
+interface ShopifyMetafield {
+  id: number;
+  namespace: string;
+  key: string;
+  value: string;
+}
 
 export async function DELETE(
   request: NextRequest,
@@ -31,7 +38,7 @@ export async function DELETE(
     const {
       data: { metafields },
     } = await shopify.get(`/products/${productId}/metafields.json`);
-    const mf = (metafields as any[]).find(
+    const mf = (metafields as ShopifyMetafield[]).find(
       (m) => m.namespace === "bxgy" && m.key === "discounts"
     );
     if (mf) {
@@ -66,11 +73,19 @@ export async function DELETE(
     await prisma.discount.delete({ where: { id: dbId } });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    console.error("Delete flow error:", err.response?.data || err.message);
-    return NextResponse.json(
-      { error: err.response?.data || err.message },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    // Narrow the error
+    if (axios.isAxiosError(error)) {
+      // error is AxiosError
+      return NextResponse.json(
+        { error: error.response?.data || error.message },
+        { status: error.response?.status || 500 }
+      );
+    }
+
+    // Fallback for other errors
+    const err = error instanceof Error ? error : new Error("Unknown error");
+    console.error("Unexpected error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

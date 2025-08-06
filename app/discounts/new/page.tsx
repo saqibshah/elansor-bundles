@@ -52,12 +52,10 @@ const NewDiscountsPage = () => {
   const [error, setError] = useState("");
 
   const onSubmit = handleSubmit(async (data) => {
-    console.log(data);
-
     try {
       setSubmitting(true);
       setError("");
-      const response = await axios.post("/api/discounts", data);
+      await axios.post("/api/discounts", data);
       router.push("/discounts");
       router.refresh();
     } catch (error) {
